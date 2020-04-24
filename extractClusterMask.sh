@@ -15,12 +15,14 @@ usage()
 
 help()
 {
-    echo ""
-    usage
-    echo -e "\t-i Path to the Cluster Index image."
-    echo -e "\t\tThe clusters must be assigned a unique number (from 1 to N)."
-    echo -e "\t\tThis can be the output of fsl's cluster."
-    echo -e "\t-n Number of clusters to extract."
+    usage;
+    printf "
+    -h\tShow this informatio
+    -i\tPath to the Cluster Index image.
+    \t\tThe clusters must be assigned a unique number (from 1 to N).
+    \t\tThis can be the output of fsl's cluster.
+    -n\tNumber of clusters to extract.
+    -h\tDisplay this help and exit.\n"
 }
 
 exit_error()
@@ -30,7 +32,7 @@ exit_error()
 }
 
 ## Argument parser
-while getopts "hoi:n:" arg; do
+while getopts "hi:n:" arg; do
     case "$arg" in
         h) help;
             exit;;
