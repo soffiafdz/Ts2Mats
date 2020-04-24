@@ -1,23 +1,19 @@
-#!/bin/bash
+#!/bin/sh
 
-########################################
-# Shell script for extracting the
-# corresponding submasks of every
-# one of the indexed images.
-# It implements FSL.
-########################################
+######################################################################
+# Shell script for extracting the corresponding submasks of every
+# one of the indexed images. It implements FSL.
+# © 2020 Sofía Fernández, M.Sc. | so1.618e@gmail.com
+######################################################################
 
 ## Functions for help, usage, and errors.
-usage()
-{
-    echo "Usage: $0 [-i IMAGE] [-n NUMBER]" 1>&2;
+usage(){
+    printf "Usage: %s [-h] <-i IMAGE> <-n NUMBER>\n" "$0";
 }
 
-help()
-{
+help_msj(){
     usage;
     printf "
-    -h\tShow this informatio
     -i\tPath to the Cluster Index image.
     \t\tThe clusters must be assigned a unique number (from 1 to N).
     \t\tThis can be the output of fsl's cluster.
@@ -25,36 +21,35 @@ help()
     -h\tDisplay this help and exit.\n"
 }
 
-exit_error()
-{
+exit_error(){
    usage;
    exit 1;
 }
 
 ## Argument parser
-while getopts "hi:n:" arg; do
-    case "$arg" in
-        h) help;
+while getopts "hi:n:" OPT; do
+    case "$OPT" in
+        h) help_msj;
             exit;;
-        i) IMAGE=$OPTARG;
-            [[ -f $OPTARG ]] \
-                || printf "ERROR: %s is not a file\n" "$OPTARG" >&2 \
+        i) [ -f $OPTARG ] \
+                || printf "ERROR: %s is not a file.\n" "$OPTARG" >&2 \
                 && exit_error;
-            [[ -e $OPTARG ]] \
-                || printf "ERROR: Could not find %s\n" "$OPTARG" >&2 \
-                && exit_error;;
-        n) NUM=$OPTARG;
-            [[ $NUM =~ '^[0-9]+$' ]] \
-                || printf "ERROR: %s must be a positive whole number\n" \
+            [ -e $OPTARG ] \
+                || printf "ERROR: Could not find %s.\n" "$OPTARG" >&2 \
+                && exit_error;
+            IMAGE=$OPTARG;;
+        n) [ $NUM =~ '^[0-9]+$' ] \
+                || printf "ERROR: %s must be a positive whole number.\n" \
                     "$OPTARG" >&2 \
                 && exit_error;
-            [[ $NUM -eq "0" ]] \
-                && printf "ERROR: %s must be greater than zero\n" \
+            [ $NUM -eq "0" ] \
+                && printf "ERROR: %s must be greater than zero.\n" \
                     "$OPTARG" >&2 \
-                && exit_error;;
-        :) printf "Missing argument for -%s\n" "$OPTARG" >&2;
+                && exit_error;
+                NUM=$OPTARG;;
+        :) printf "Missing argument for -%s.\n" "$OPTARG" >&2;
             exit_error;;
-        ?) printf "Illegal option: -%s\n" "$OPTARG" >&2;
+        ?) printf "Illegal option: %s.\n" "$OPTARG" >&2;
             exit_error;;
     esac
 done
