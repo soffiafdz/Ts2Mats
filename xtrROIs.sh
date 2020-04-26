@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 ######################################################################
 # Shell script for extracting the corresponding submasks of every
@@ -35,7 +35,7 @@ main(){
 
 ## Check FSL is installed and fslmaths executable
 fslmaths &>/dev/null \
-  || err "fslmaths is not found in PATH. Check FSL installation"
+  || err "fslmaths is not found in PATH. Check FSL installation\n"
 
 ## Argument parser
 while getopts "hi:n:" arg; do
@@ -57,7 +57,7 @@ while getopts "hi:n:" arg; do
 done
 
 # Derivated variables
-ext=${Image#*.};
+ext=${img#*.};
 bn=$(basename "$img" "$ext");
 outdir="${bn}_masks";
 
