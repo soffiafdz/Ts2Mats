@@ -25,7 +25,7 @@ OPTIONAL ARGUMENTS
 
 err(){
   echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]:" >&2
-  printf $* >&2
+  printf "$*" >&2
   exit 1
 }
 
@@ -35,7 +35,7 @@ main(){
 
 ## Check FSL is installed and fslmaths executable
 fslmaths &>/dev/null \
-  || err "fslmaths is not found in PATH. Check FSL installation\n"
+  || err "fslmaths is not found in PATH. Check FSL installation.\n"
 
 ## Argument parser
 while getopts "hi:n:" arg; do
