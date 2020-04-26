@@ -46,30 +46,30 @@ while getopts "hi:n:" arg; do
     i)
       [[ -f "$OPTARG" ]] || err "%s is not a file.\n" "$OPTARG"
       [[ -e "$OPTARG" ]] || err "%s not found.\n" "$OPTARG"
-      Image="$OPTARG"
+      img="$OPTARG"
       ;;
     n)
       [[ "$OPTARG" -gt 0 ]] 2>/dev/null \
         || err "%s must be natural number (>0).\n" "$OPTARG"
-      Num=$OPTARG
+      num=$OPTARG
       ;;
   esac
 done
 
 # Derivated variables
 ext=${Image#*.};
-BName=$(basename "$Image" "$ext");
-Outdir="${BName}_masks";
+bn=$(basename "$img" "$ext");
+outdir="${bn}_masks";
 
 # Create directory for outputs with same name as the input image
-mkdir "$Outdir";
+mkdir "$outdir";
 
 # Loop through the number of clusters requested in NUM.
 # Implementation of fslmaths extracting the indexed cluster.
 
-for idx in {1.."$NUM"}; do
-  Out="${Outdir}/${BName}_$idx"
-  fslmaths -dt int "$Image" -thr "$idx" -uthr "$idx" -bin "$Out";
+for idx in {1.."$num"}; do
+  out="${outdir}/${bn}_$idx"
+  fslmaths -dt int "$img" -thr "$idx" -uthr "$idx" -bin "$out";
 done
 }
 
