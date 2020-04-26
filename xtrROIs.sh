@@ -15,8 +15,8 @@ help_msj(){
   printf "
 COMPULSORY ARGUMENTS
 -i\tPath to the Cluster Index Image.
-\t\tThe clusters must be assigned a unique number (from 1 to N).
-\t\tThis can be the output of fsl's cluster.
+\tThe clusters must be assigned a unique number (from 1 to N).
+\tThis can be the output of fsl's cluster.
 -n\tNumber of clusters to extract.
 OPTIONAL ARGUMENTS
 -h\tDisplay this help and exit.\n"
