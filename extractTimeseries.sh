@@ -10,106 +10,127 @@
 
 ## Functions for help and errors.
 usage(){
-    printf "Usage:
-    %s [-h] -i <IMG | IMG_DIR> [-i ...] -r <ROI_DIR> [-r ...] [-o OUTDIR]
+  printf "Usage:
+  %s [-h] -i <IMG | IMG_DIR> [-i ...] -r <ROI_DIR> [-r ...] [-o OUTDIR]
 
-    \t-i\tPath to Image to from where to extract the TS data.
-    \t\t\tIt can be a file or a directory.
-    \t-m\tPath to the directory containing the ROIs to use.
-    \t\t\tThis must be a directory.
-    \t-o\tOutput path for the outcomes.
-    \t\t\tOptional. If used, it has to be an existent directory.
-    \t\t\tWhen unset, outputs will be saved in the working directory.
-    \t-h\tDisplay this help and exit.
+  \t-i\tPath to Image to from where to extract the TS data.
+  \t\t\tIt can be a file or a directory.
+  \t-m\tPath to the directory containing the ROIs to use.
+  \t\t\tThis must be a directory.
+  \t-o\tOutput path for the outcomes.
+  \t\t\tOptional. If used, it has to be an existent directory.
+  \t\t\tWhen unset, outputs will be saved in the working directory.
+  \t-h\tDisplay this help and exit.
 
-    This script can parse several arguments of the same time;
-    but every instance must be preceded by the flag.
-    The output will be directory for every image containing
+  This script can parse several arguments of the same time;
+  but every instance must be preceded by the flag.
+  The output will be directory for every image containing
 
-    Examples:
-    %s -i sub1-ses1.nii -i sub1-ses2.nii -i sub1-ses3.nii -r atlas/rois
-    %s -i proj/subs1 -i proj/subs2 -r atlas/power -r atlas/dosenbach\n" \
-    "$0" "$0";
-    exit
+  Examples:
+  %s -i sub1-ses1.nii -i sub1-ses2.nii -i sub1-ses3.nii -r atlas/rois
+  %s -i proj/subs1 -i proj/subs2 -r atlas/power -r atlas/dosenbach\n" \
+  "$0" "$0";
+  exit
 }
 
 err(){
-    echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]:" >&2
-    printf $* >&2
-    exit 1;
+  echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]:" >&2
+  printf $* >&2
+  exit 1;
 }
 
-## If no argments, print help and exit
-[[ $# -eq 0 ]] && usage && exit
+check_nii(){
+ local ext="${1#*.}"
+  [ "$ext" != "nii" ] && [ "$ext" != "nii.gz" ] \
+    && printf "%s is not a NIfTI image\n" "$1" \
+    && continue
+}
 
-## Check FSL is installed and fslmeants executable
+main(){
+## If no argments, print help and exit.
+[[ $# -eq 0 ]] && usage
+
+## Check FSL is installed and fslmeants executable.
 fslmeants &>/dev/null \
-    || err "ERROR: fslmeants is not executable or not found in PATH.
-Check FSL installation"
+  || err "fslmeants is not executable. Check FSL installation.\n"
 
-## Argument parser
+## Argument parser.
 while getopts "hi:r:o:" arg; do
-    case "$arg" in
-        -i) [ -e "$OPTARG" ] \
-                || err "%s not found.\n" "$OPTARG";
-            INPUTS+=("$OPTARG");;
-        -r) [ -d "$OPTARG" ] \
-                || err "%s is not a directory.\n" "$OPTARG";
-            [ -e "$OPTARG" ] \
-                || err "%s not found.\n" "$OPTARG";
-            ROIS+=("$OPTARG");;
-        -o) [ -d "$OPTARG" ] \
-                || err "%s is not a directory.\n" "$OPTARG";
-            [ -e "$OPTARG" ] \
-                || err "%s not found.\n" "$OPTARG";
-            OUTDIR="$OPTARG";;
-        -h) usage; exit;;
-        :) err "Missing argument for -%s.\n" "$OPTARG";;
-        ?) err "Illegal option: %s.\n" "$OPTARG";;
-    esac
+  case "$arg" in
+    -i) [[ -e "$OPTARG" ]] || err "%s not found.\n" "$OPTARG"
+      inputs+=("$OPTARG");;
+    -r) [[ -d "$OPTARG" ]] || err "%s is not a directory.\n" "$OPTARG"
+      [[ -e "$OPTARG" ]] || err "%s not found.\n" "$OPTARG"
+      roidirs+=("$OPTARG");;
+    -o) [[ -d "$OPTARG" ]] || err "%s is not a directory.\n" "$OPTARG"
+      [[ -e "$OPTARG" ]] || err "%s not found.\n" "$OPTARG"
+      outdir="$OPTARG";;
+    -h) usage; exit;;
+    :) err "Missing argument for -%s.\n" "$OPTARG";;
+    ?) err "Illegal option: %s.\n" "$OPTARG";;
+  esac
 done
 
-## Functions
-Get_Extension(){
+## Sort in values into directories and files.
+for input in "${inputs[@]}"; do
+  [[ -f "$input" ]] && infiles+="$input" && continue
+  [[ -d "$input" ]] && indirs+="$input" && continue
+  printf "%s is not a valid file or directory.\n" "$input"
+done
 
-CheckForNii(){
-    EXT="${1#*.}"
-    [ "$EXT" != "nii" ] && [ "$EXT" != "nii.gz" ] \
-        && printf "ERROR: %s is not a NIfTI image\n" "$1" \
+## If no in values left, exit with error.
+[[ ${#infiles} -eq 0 ]] && [[ ${#indirs} -eq 0 ]] && err "Not valid inputs\n"
+
+## Set OUTDIR to working directory if not set.
+${outdir:=`pwd`}
+
+## Main loop through inputs and rois; extract timeseries and concatenate them.
+for roidir in "${roidirs[@]}"; do
+  ## Files section
+  for file in "${infiles[@]}"; do
+    check_nii "$file"
+    img="$file"
+    bn_img="${img##*/}"
+    # Loop through all ROIs in directory
+    for roi in "${roidir}/*"; do
+      check_nii "$roi"
+      bn_roi="${roi##*/}"
+      fslmeants \
+        -i "$img" \
+        -o "${outdir}/${bn_img}_${bn_roi}.1D" \
+        -m "$roi" \
+        --transpose
+    done
+    # Concatenate all ROIs timeseries into same file.
+    cat "${outdir}/${bn_img}"*.1D \
+      >> "${outdir}/${bn_dir}_${bn_img}".mat
+  done
+  ## Directories section
+  for dir in "${indirs[@]}"; do
+    bn_dir="${dir##*/}"
+    # Loop through the contents to omit directories and check for NIfTIs.
+    for content in "${dir}/*"; do
+      [[ -d "$content" ]] \
+        && printf "%s in %s is a directory. Ommiting it.\n" "$content" "$dir" \
         && continue
+      [[ -f "$content" ]] && check_nii "$content"
+      img="$content"
+      bn_img="${img##*/}"
+      #Same as above. This time, Directory basename is suffix in name.
+      for roi in "${roidir}/*"; do
+        check_nii "$roi"
+        bn_roi="${roi##*/}"
+        fslmeants \
+          -i "$img" \
+          -o "${outdir}/${bn_dir}_${bn_img}_${bn_roi}.1D" \
+          -m "$roi" \
+          --transpose
+      done
+      cat "${outdir}/${bn_dir}_${bn_img}"*.1D \
+        >> "${outdir}/${bn_dir}_${bn_img}".mat
+    done
+  done
+done
 }
 
-
-
-## Main
-
-# Set OUTDIR to working directory if not set
-${OUTDIR:=`pwd`}
-
-# Sort IN values into Directories and Files
-for INPUT in "${INPUTS[@]}"; do
-    [ ! -e "$INPUT" ] && printf "ERROR: %s not found." "$INPUT" && continue;
-    [ -f "$INPUT" ] && IN_FILES+="$INPUT" && continue;
-    [ -d "$INPUT" ] && IN_DIRS+="$INPUT" && continue;
-    printf "ERROR: %s is not a valid file or directory." "$INPUT"
-done
-
-
-for ROI_DIR in "${ROIS[@]}"; do
-
-        for ROI in "${ROI_DIR}/*"; do
-            CheckForNii "$ROI";
-            fslmeants \
-                -i "$IMAGE" \
-                -o "${OUTDIR}/${BN_IMG}_${BN_ROI}.txt" \
-                -m "$ROI" \
-                --transpose;
-            done
-        done
-    done
-
-
-
-IMG_EXT="${IMG#*.}"
-BN_IMG=$(basename "$IMG" "$IMG_EXT")
-SUBDIR="${OUTDIR:-$(pwd)}/${IMG}_TS"
+main "$@"
