@@ -11,25 +11,25 @@
 ## Functions for help and errors.
 usage(){
   printf "Usage:
-  %s [-h] -i <IMG | IMG_DIR> [-i ...] -r <ROI_DIR> [-r ...] [-o OUTDIR]
+%s [-h] -i <IMG | IMG_DIR> [-i ...] -r <ROI_DIR> [-r ...] [-o OUTDIR]
 
-  \t-i\tPath to Image to from where to extract the TS data.
-  \t\t\tIt can be a file or a directory.
-  \t-m\tPath to the directory containing the ROIs to use.
-  \t\t\tThis must be a directory.
-  \t-o\tOutput path for the outcomes.
-  \t\t\tOptional. If used, it has to be an existent directory.
-  \t\t\tWhen unset, outputs will be saved in the working directory.
-  \t-h\tDisplay this help and exit.
+\t-i\tPath to Image to from where to extract the TS data.
+\t\t\tIt can be a file or a directory.
+\t-m\tPath to the directory containing the ROIs to use.
+\t\t\tThis must be a directory.
+\t-o\tOutput path for the outcomes.
+\t\t\tOptional. If used, it has to be an existent directory.
+\t\t\tWhen unset, outputs will be saved in the working directory.
+\t-h\tDisplay this help and exit.
 
-  This script can parse several arguments of the same time;
-  but every instance must be preceded by the flag.
-  The output will be directory for every image containing
+This script can parse several arguments of the same time;
+but every instance must be preceded by the flag.
+The output will be directory for every image containing
 
-  Examples:
-  %s -i sub1-ses1.nii -i sub1-ses2.nii -i sub1-ses3.nii -r atlas/rois
-  %s -i proj/subs1 -i proj/subs2 -r atlas/power -r atlas/dosenbach\n" \
-  "$0" "$0";
+Examples:
+\t%s -i sub1-ses1.nii -i sub1-ses2.nii -i sub1-ses3.nii -r atlas/rois
+\t%s -i proj/subs1 -i proj/subs2 -r atlas/power -r atlas/dosenbach\n" \
+    "$0" "$0";
   exit
 }
 
@@ -41,7 +41,7 @@ err(){
 
 check_nii(){
  local ext="${1#*.}"
-  [ "$ext" != "nii" ] && [ "$ext" != "nii.gz" ] \
+  [[ "$ext" != "nii" ]] && [[ "$ext" != "nii.gz" ]] \
     && printf "%s is not a NIfTI image\n" "$1" \
     && continue
 }
