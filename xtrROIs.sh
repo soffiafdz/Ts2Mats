@@ -13,13 +13,13 @@ usage(){
 help_msj(){
   usage
   printf "
-  COMPULSORY ARGUMENTS
-  -i\tPath to the Cluster Index Image.
-  \t\tThe clusters must be assigned a unique number (from 1 to N).
-  \t\tThis can be the output of fsl's cluster.
-  -n\tNumber of clusters to extract.
-  OPTIONAL ARGUMENTS
-  -h\tDisplay this help and exit.\n"
+COMPULSORY ARGUMENTS
+-i\tPath to the Cluster Index Image.
+\t\tThe clusters must be assigned a unique number (from 1 to N).
+\t\tThis can be the output of fsl's cluster.
+-n\tNumber of clusters to extract.
+OPTIONAL ARGUMENTS
+-h\tDisplay this help and exit.\n"
   exit
 }
 
@@ -31,7 +31,7 @@ err(){
 
 main(){
   ## If no arguments, show help and exit
-  [[ $# -eq 0 ]] && help_msj
+  [ $# -eq 0 ] && help_msj
 
 ## Check FSL is installed and fslmaths executable
 fslmaths &>/dev/null \
@@ -44,12 +44,12 @@ while getopts "hi:n:" arg; do
     :) err "Missing argument for -%s.\n" "$OPTARG";;
     ?) err "Illegal option: %s.\n" "$OPTARG";;
     i)
-      [[ -f "$OPTARG" ]] || err "%s is not a file.\n" "$OPTARG"
-      [[ -e "$OPTARG" ]] || err "%s not found.\n" "$OPTARG"
+      [ -f "$OPTARG" ] || err "%s is not a file.\n" "$OPTARG"
+      [ -e "$OPTARG" ] || err "%s not found.\n" "$OPTARG"
       img="$OPTARG"
       ;;
     n)
-      [[ "$OPTARG" -gt 0 ]] 2>/dev/null \
+      [ "$OPTARG" -gt 0 ] 2>/dev/null \
         || err "%s must be natural number (>0).\n" "$OPTARG"
       num=$OPTARG
       ;;
