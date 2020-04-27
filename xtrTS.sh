@@ -57,15 +57,15 @@ which fslmeants &>/dev/null \
 ## Argument parser.
 while getopts "hi:r:o:" arg; do
   case "$arg" in
-    -i) [[ -e "$OPTARG" ]] || err "%s not found.\n" "$OPTARG"
+    i) [[ -e "$OPTARG" ]] || err "%s not found.\n" "$OPTARG"
       inputs+=("$OPTARG");;
-    -r) [[ -d "$OPTARG" ]] || err "%s is not a directory.\n" "$OPTARG"
+    r) [[ -d "$OPTARG" ]] || err "%s is not a directory.\n" "$OPTARG"
       [[ -e "$OPTARG" ]] || err "%s not found.\n" "$OPTARG"
       roidirs+=("$OPTARG");;
-    -o) [[ -d "$OPTARG" ]] || err "%s is not a directory.\n" "$OPTARG"
+    o) [[ -d "$OPTARG" ]] || err "%s is not a directory.\n" "$OPTARG"
       [[ -e "$OPTARG" ]] || err "%s not found.\n" "$OPTARG"
       outdir="$OPTARG";;
-    -h) usage; exit;;
+    h) usage; exit;;
     :) err "Missing argument for -%s.\n" "$OPTARG";;
     ?) err "Illegal option: %s.\n" "$OPTARG";;
   esac
