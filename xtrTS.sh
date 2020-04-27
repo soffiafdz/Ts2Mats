@@ -117,7 +117,7 @@ for roidir in "${roidirs[@]}"; do
         --transpose \
       && echo "Extracted TS from ${bn_roi} of ${bn_img}"
       # Concatenate all ROIs timeseries into same file.
-      cat "${outdir}/${bn_img}_TS/${i}_${bn_img}_${bn_roi}.1D"
+      cat "${outdir}/${bn_img}_TS/${i}_${bn_img}_${bn_roi}.1D" \
         >> "${outdir}/${bn_img}".mat \
       && echo "Appended to TS matrix"
       (( i++ ))
@@ -147,7 +147,7 @@ for roidir in "${roidirs[@]}"; do
           --transpose \
         && echo "Extracted TS from ${bn_roi} of ${bn_img} in ${bn_dir}"
         # Concatenate all ROIs timeseries into same file.
-        cat "${outdir}/${bn_dir}_${bn_img}_TS/${i}_${bn_img}_${bn_roi}.1D"
+        cat "${outdir}/${bn_dir}_${bn_img}_TS/${i}_${bn_img}_${bn_roi}.1D" \
           >> "${outdir}/${bn_dir}_${bn_img}".mat \
         && echo "Appended to TS matrix"
         (( i++ ))
