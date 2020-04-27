@@ -71,6 +71,10 @@ while getopts "hi:r:o:" arg; do
   esac
 done
 
+## Check for all compulsory arguments
+[ -z "${#inputs[@]}" ] && [ -z "${#roidirs[@]}" ] \
+  err "Missing compulsory arguments.\n"
+
 ## Sort in values into directories and files.
 for input in "${inputs[@]}"; do
   [[ -f "$input" ]] && infiles+="$input" && continue
@@ -79,13 +83,15 @@ for input in "${inputs[@]}"; do
 done
 
 ## If no in values left, exit with error.
-[[ ${#infiles} -eq 0 ]] && [[ ${#indirs} -eq 0 ]] && err "Not valid inputs\n"
+[[ ${#infiles[@]} -eq 0 ]] && [[ ${#indirs[@]} -eq 0 ]] \
+  && err "Not valid inputs\n"
 
 ## Set OUTDIR to working directory if not set.
 : ${outdir:=$(pwd)}
 
 ## Main loop through inputs and rois; extract timeseries and concatenate them.
 for roidir in "${roidirs[@]}"; do
+  [ -d "$roidir" ] || err "%s not an existing directory" "$roidir"
   ## Files section
   for file in "${infiles[@]}"; do
     check_nii "$file"
