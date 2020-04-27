@@ -72,8 +72,8 @@ while getopts "hi:r:o:" arg; do
 done
 
 ## Check for all compulsory arguments
-[ -z "${#inputs[@]}" ] && [ -z "${#roidirs[@]}" ] \
-  err "Missing compulsory arguments.\n"
+[ -z "${#inputs[@]}" ] || [ -z "${#roidirs[@]}" ] \
+  && err "Missing compulsory arguments.\n"
 
 ## Sort in values into directories and files.
 for input in "${inputs[@]}"; do
@@ -84,7 +84,7 @@ done
 
 ## If no in values left, exit with error.
 [[ ${#infiles[@]} -eq 0 ]] && [[ ${#indirs[@]} -eq 0 ]] \
-  && err "Not valid inputs\n"
+  && err "Not valid inputs.\n"
 
 ## Set OUTDIR to working directory if not set.
 : ${outdir:=$(pwd)}
