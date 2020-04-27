@@ -72,7 +72,7 @@ while getopts "hi:r:o:" arg; do
 done
 
 ## Check for all compulsory arguments
-[ -z "${#inputs[@]}" ] || [ -z "${#roidirs[@]}" ] \
+[ "${#inputs[@]}" -eq 0 ] || [ "${#roidirs[@]}" -eq 0 ] \
   && err "Missing compulsory arguments.\n"
 
 ## Sort in values into directories and files.
