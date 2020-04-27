@@ -98,6 +98,7 @@ done
 ## Main loop through inputs and rois; extract timeseries and concatenate them.
 for roidir in "${roidirs[@]}"; do
   [ -d "$roidir" ] || err "%s not an existing directory" "$roidir"
+  printf "**Starting with %s**" "$roidir"
   ## Files section
   for file in "${infiles[@]}"; do
     check_nii "$file"
@@ -105,6 +106,7 @@ for roidir in "${roidirs[@]}"; do
     bn_img="$(bname "$file")"
     mkdir -p "${outdir}/${bn_img}_TS"
     # Loop through all ROIs in directory
+    printf "**Starting with %s**" "$bn_img"
     # Set a counter
     i=1
     for roi in "${roidir}"/*; do
@@ -122,10 +124,12 @@ for roidir in "${roidirs[@]}"; do
       && echo "Appended to TS matrix"
       (( i++ ))
     done
+    printf "**Finished with %s**" "$bn_img"
   done
   ## Directories section
   for dir in "${indirs[@]}"; do
     bn_dir="${dir##*/}"
+    printf "**Starting with %s**" "$bn_dir"
     # Loop through the contents to omit directories and check for NIfTIs.
     for content in "${dir}/*"; do
       [[ -d "$content" ]] \
@@ -134,6 +138,7 @@ for roidir in "${roidirs[@]}"; do
       [[ -f "$content" ]] && check_nii "$content"
       img="$content"
       bn_img="$(bname "$img")"
+      printf "**Starting with %s**" "$bn_img"
       mkdir -p "${outdir}/${bn_dir}_${bn_img}_TS"
       #Same as above. This time, Directory basename is suffix in name.
       i=1
@@ -152,8 +157,11 @@ for roidir in "${roidirs[@]}"; do
         && echo "Appended to TS matrix"
         (( i++ ))
       done
+      printf "**Finished with %s**" "$bn_img"
     done
+    printf "**Finished with %s**" "$bn_dir"
   done
+  printf "**Finished with %s**" "$roidir"
 done
 }
 
