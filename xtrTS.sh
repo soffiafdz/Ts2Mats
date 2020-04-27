@@ -46,6 +46,12 @@ check_nii(){
     && continue
 }
 
+bname(){
+    local filename="${1##*/}"
+    local name="${filename%%.*}"
+    echo "$name"
+}
+
 main(){
 ## If no argments, print help and exit.
 [[ $# -eq 0 ]] && usage
@@ -96,20 +102,24 @@ for roidir in "${roidirs[@]}"; do
   for file in "${infiles[@]}"; do
     check_nii "$file"
     img="$file"
-    bn_img="${img##*/}"
+    bn_img="$(bname "$file")"
+    mkdir -p "${outdir}/${bn_img}_TS"
     # Loop through all ROIs in directory
-    for roi in "${roidir}/*"; do
+    for roi in "${roidir}"/*; do
       check_nii "$roi"
-      bn_roi="${roi##*/}"
+      bn_roi="$(bname "$roi")"
       fslmeants \
         -i "$img" \
-        -o "${outdir}/${bn_img}_${bn_roi}.1D" \
+        -o "${outdir}/${bn_img}_TS/${bn_img}_${bn_roi}.1D" \
         -m "$roi" \
-        --transpose
+        --transpose \
+      && echo "Extracted TS from ${bn_roi} of ${bn_img}"
     done
     # Concatenate all ROIs timeseries into same file.
-    cat "${outdir}/${bn_img}"*.1D \
-      >> "${outdir}/${bn_dir}_${bn_img}".mat
+    cat "${outdir}/${bn_img}_TS/${bn_img}_*.1D"
+      >> "${outdir}/${bn_dir}_${bn_img}".mat \
+    && echo "Created TS matrix for ${bn_img}"
+
   done
   ## Directories section
   for dir in "${indirs[@]}"; do
@@ -121,19 +131,22 @@ for roidir in "${roidirs[@]}"; do
         && continue
       [[ -f "$content" ]] && check_nii "$content"
       img="$content"
-      bn_img="${img##*/}"
+      bn_img="$(bname "$img")"
+      mkdir -p "${outdir}/${bn_dir}_${bn_img}_TS"
       #Same as above. This time, Directory basename is suffix in name.
       for roi in "${roidir}/*"; do
         check_nii "$roi"
         bn_roi="${roi##*/}"
         fslmeants \
           -i "$img" \
-          -o "${outdir}/${bn_dir}_${bn_img}_${bn_roi}.1D" \
+          -o "${outdir}/${bn_dir}_${bn_img}_TS/${bn_img}_${bn_roi}.1D" \
           -m "$roi" \
-          --transpose
+          --transpose \
+        && echo "Extracted TS from ${bn_roi} of ${bn_img} in ${bn_dir}"
       done
-      cat "${outdir}/${bn_dir}_${bn_img}"*.1D \
-        >> "${outdir}/${bn_dir}_${bn_img}".mat
+      cat "${outdir}/${bn_dir}_${bn_img}_TS/${bn_img}_"*.1D \
+        >> "${outdir}/${bn_dir}_${bn_img}".mat \
+      && echo "Created TS matrix for ${bn_img}"
     done
   done
 done
