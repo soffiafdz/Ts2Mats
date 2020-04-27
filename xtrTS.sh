@@ -51,7 +51,7 @@ main(){
 [[ $# -eq 0 ]] && usage
 
 ## Check FSL is installed and fslmeants executable.
-fslmeants &>/dev/null \
+which fslmeants &>/dev/null \
   || err "fslmeants is not executable. Check FSL installation.\n"
 
 ## Argument parser.
