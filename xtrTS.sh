@@ -105,21 +105,23 @@ for roidir in "${roidirs[@]}"; do
     bn_img="$(bname "$file")"
     mkdir -p "${outdir}/${bn_img}_TS"
     # Loop through all ROIs in directory
+    # Set a counter
+    i=1
     for roi in "${roidir}"/*; do
       check_nii "$roi"
       bn_roi="$(bname "$roi")"
       fslmeants \
         -i "$img" \
-        -o "${outdir}/${bn_img}_TS/${bn_img}_${bn_roi}.1D" \
+        -o "${outdir}/${bn_img}_TS/${i}_${bn_img}_${bn_roi}.1D" \
         -m "$roi" \
         --transpose \
       && echo "Extracted TS from ${bn_roi} of ${bn_img}"
+      # Concatenate all ROIs timeseries into same file.
+      cat "${outdir}/${bn_img}_TS/${i}_${bn_img}_${bn_roi}.1D"
+        >> "${outdir}/${bn_img}".mat \
+      && echo "Appended to TS matrix"
+      (( i++ ))
     done
-    # Concatenate all ROIs timeseries into same file.
-    cat "${outdir}/${bn_img}_TS/${bn_img}_*.1D"
-      >> "${outdir}/${bn_dir}_${bn_img}".mat \
-    && echo "Created TS matrix for ${bn_img}"
-
   done
   ## Directories section
   for dir in "${indirs[@]}"; do
@@ -134,19 +136,22 @@ for roidir in "${roidirs[@]}"; do
       bn_img="$(bname "$img")"
       mkdir -p "${outdir}/${bn_dir}_${bn_img}_TS"
       #Same as above. This time, Directory basename is suffix in name.
+      i=1
       for roi in "${roidir}/*"; do
         check_nii "$roi"
         bn_roi="${roi##*/}"
         fslmeants \
           -i "$img" \
-          -o "${outdir}/${bn_dir}_${bn_img}_TS/${bn_img}_${bn_roi}.1D" \
+          -o "${outdir}/${bn_dir}_${bn_img}_TS/${i}_${bn_img}_${bn_roi}.1D" \
           -m "$roi" \
           --transpose \
         && echo "Extracted TS from ${bn_roi} of ${bn_img} in ${bn_dir}"
+        # Concatenate all ROIs timeseries into same file.
+        cat "${outdir}/${bn_dir}_${bn_img}_TS/${i}_${bn_img}_${bn_roi}.1D"
+          >> "${outdir}/${bn_dir}_${bn_img}".mat \
+        && echo "Appended to TS matrix"
+        (( i++ ))
       done
-      cat "${outdir}/${bn_dir}_${bn_img}_TS/${bn_img}_"*.1D \
-        >> "${outdir}/${bn_dir}_${bn_img}".mat \
-      && echo "Created TS matrix for ${bn_img}"
     done
   done
 done
