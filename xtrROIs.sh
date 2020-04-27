@@ -33,44 +33,47 @@ main(){
   ## If no arguments, show help and exit
   [ $# -eq 0 ] && help_msj
 
-## Check FSL is installed and fslmaths executable
-fslmaths -h &>/dev/null \
-  || err "fslmaths is not found in PATH. Check FSL installation.\n"
+  ## Check FSL is installed and fslmaths executable
+  fslmaths -h &>/dev/null \
+    || err "fslmaths is not found in PATH. Check FSL installation.\n"
 
-## Argument parser
-while getopts "hi:n:" arg; do
-  case "$arg" in
-    i)
-      [ -f "$OPTARG" ] || err "%s is not a file.\n" "$OPTARG"
-      [ -e "$OPTARG" ] || err "%s not found.\n" "$OPTARG"
-      img="$OPTARG"
-      ;;
-    n)
-      [ "$OPTARG" -gt 0 ] 2>/dev/null \
-        || err "%s must be natural number (>0).\n" "$OPTARG"
-      num=$OPTARG
-      ;;
-    h) help_msj;;
-    :) err "Missing argument for -%s.\n" "$OPTARG";;
-    ?) err "Illegal option: %s.\n" "$OPTARG";;
-  esac
-done
+  ## Argument parser
+  while getopts "hi:n:" arg; do
+    case "$arg" in
+      i)
+        [ -f "$OPTARG" ] || err "%s is not a file.\n" "$OPTARG"
+        [ -e "$OPTARG" ] || err "%s not found.\n" "$OPTARG"
+        img="$OPTARG"
+        ;;
+      n)
+        [ "$OPTARG" -gt 0 ] 2>/dev/null \
+          || err "%s must be natural number (>0).\n" "$OPTARG"
+        num=$OPTARG
+        ;;
+      h) help_msj;;
+      :) err "Missing argument for -%s.\n" "$OPTARG";;
+      ?) err "Illegal option: %s.\n" "$OPTARG";;
+    esac
+  done
 
-# Derivated variables
-ext=${img#*.};
-bn=$(basename "$img" ".$ext");
-outdir="${bn}_masks";
+  # Check for compulsory variables
+  [ -z "$img" ] || [ -z "$num" ] && err "Missing compulsory argument(s)\n"
 
-# Create directory for outputs with same name as the input image
-mkdir "$outdir";
+  # Derivated variables
+  ext=${img#*.};
+  bn=$(basename "$img" ".$ext");
+  outdir="${bn}_masks";
 
-# Loop through the number of clusters requested in NUM.
-# Implementation of fslmaths extracting the indexed cluster.
+  # Create directory for outputs with same name as the input image
+  mkdir "$outdir";
 
-for ((i=1 ; i<1+"$num" ; i++)); do
-  out="${outdir}/${bn}_$i"
-  fslmaths -dt int "$img" -thr "$i" -uthr "$i" -bin "$out";
-done
+  # Loop through the number of clusters requested in NUM.
+  # Implementation of fslmaths extracting the indexed cluster.
+
+  for ((i=1 ; i<1+"$num" ; i++)); do
+    out="${outdir}/${bn}_$i"
+    fslmaths -dt int "$img" -thr "$i" -uthr "$i" -bin "$out";
+  done
 }
 
 main "$@"
