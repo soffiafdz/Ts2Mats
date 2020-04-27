@@ -83,8 +83,8 @@ done
 
 ## Sort in values into directories and files.
 for input in "${inputs[@]}"; do
-  [[ -f "$input" ]] && infiles+="$input" && continue
-  [[ -d "$input" ]] && indirs+="$input" && continue
+  [[ -f "$input" ]] && infiles+=("$input") && continue
+  [[ -d "$input" ]] && indirs+=("$input") && continue
   printf "%s is not a valid file or directory.\n" "$input"
 done
 
