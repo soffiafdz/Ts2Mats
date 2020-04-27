@@ -82,7 +82,7 @@ done
 [[ ${#infiles} -eq 0 ]] && [[ ${#indirs} -eq 0 ]] && err "Not valid inputs\n"
 
 ## Set OUTDIR to working directory if not set.
-${outdir:=`pwd`}
+: ${outdir:=$(pwd)}
 
 ## Main loop through inputs and rois; extract timeseries and concatenate them.
 for roidir in "${roidirs[@]}"; do
