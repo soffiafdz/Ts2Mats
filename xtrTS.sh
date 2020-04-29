@@ -46,6 +46,12 @@ check_nii(){
     && continue
 }
 
+bname(){
+    local filename="${1##*/}"
+    local name="${filename%%.*}"
+    echo "$name"
+}
+
 main(){
 ## If no argments, print help and exit.
 [[ $# -eq 0 ]] && usage
@@ -72,13 +78,13 @@ while getopts "hi:r:o:" arg; do
 done
 
 ## Check for all compulsory arguments
-[ -z "${#inputs[@]}" ] || [ -z "${#roidirs[@]}" ] \
+[ "${#inputs[@]}" -eq 0 ] || [ "${#roidirs[@]}" -eq 0 ] \
   && err "Missing compulsory arguments.\n"
 
 ## Sort in values into directories and files.
 for input in "${inputs[@]}"; do
-  [[ -f "$input" ]] && infiles+="$input" && continue
-  [[ -d "$input" ]] && indirs+="$input" && continue
+  [[ -f "$input" ]] && infiles+=("$input") && continue
+  [[ -d "$input" ]] && indirs+=("$input") && continue
   printf "%s is not a valid file or directory.\n" "$input"
 done
 
@@ -92,50 +98,71 @@ done
 ## Main loop through inputs and rois; extract timeseries and concatenate them.
 for roidir in "${roidirs[@]}"; do
   [ -d "$roidir" ] || err "%s not an existing directory" "$roidir"
+  printf "**Starting with %s**\n" "$roidir"
+  bn_roidir="$(bname "$roidir")"
   ## Files section
   for file in "${infiles[@]}"; do
     check_nii "$file"
     img="$file"
-    bn_img="${img##*/}"
+    bn_img="$(bname "$file")"
+    mkdir -p "${outdir}/${bn_roidir}_${bn_img}_TS"
     # Loop through all ROIs in directory
-    for roi in "${roidir}/*"; do
+    printf "**Starting with %s**\n" "$bn_img"
+    # Set a counter
+    i=1
+    for roi in "${roidir}"/*; do
       check_nii "$roi"
-      bn_roi="${roi##*/}"
+      bn_roi="$(bname "$roi")"
       fslmeants \
         -i "$img" \
-        -o "${outdir}/${bn_img}_${bn_roi}.1D" \
+        -o "${outdir}/${bn_roidir}_${bn_img}_TS/${i}_${bn_img}_${bn_roi}.1D" \
         -m "$roi" \
-        --transpose
+        --transpose \
+      && echo "Extracted TS from ${bn_roi} of ${bn_img}"
+      # Concatenate all ROIs timeseries into same file.
+      cat "${outdir}/${bn_roidir}_${bn_img}_TS/${i}_${bn_img}_${bn_roi}.1D" \
+        >> "${outdir}/${bn_roidir}_${bn_img}".mat \
+      && echo "Appended to TS matrix"
+      (( i++ ))
     done
-    # Concatenate all ROIs timeseries into same file.
-    cat "${outdir}/${bn_img}"*.1D \
-      >> "${outdir}/${bn_dir}_${bn_img}".mat
+    printf "**Finished with %s**\n" "$bn_img"
   done
   ## Directories section
   for dir in "${indirs[@]}"; do
     bn_dir="${dir##*/}"
+    printf "**Starting with %s**\n" "$bn_dir"
     # Loop through the contents to omit directories and check for NIfTIs.
-    for content in "${dir}/*"; do
+    for content in "${dir}"/*; do
       [[ -d "$content" ]] \
         && printf "%s in %s is a directory. Ommiting it.\n" "$content" "$dir" \
         && continue
       [[ -f "$content" ]] && check_nii "$content"
       img="$content"
-      bn_img="${img##*/}"
+      bn_img="$(bname "$img")"
+      printf "**Starting with %s**\n" "$bn_img"
+      mkdir -p "${outdir}/${bn_roidir}_${bn_dir}_${bn_img}_TS"
       #Same as above. This time, Directory basename is suffix in name.
-      for roi in "${roidir}/*"; do
+      i=1
+      for roi in "${roidir}"/*; do
         check_nii "$roi"
         bn_roi="${roi##*/}"
         fslmeants \
           -i "$img" \
-          -o "${outdir}/${bn_dir}_${bn_img}_${bn_roi}.1D" \
+          -o "${outdir}/${bn_roidir}_${bn_dir}_${bn_img}_TS/${i}_${bn_img}_${bn_roi}.1D" \
           -m "$roi" \
-          --transpose
+          --transpose \
+        && echo "Extracted TS from ${bn_roi} of ${bn_img} in ${bn_dir}"
+        # Concatenate all ROIs timeseries into same file.
+        cat "${outdir}/${bn_roidir}_${bn_dir}_${bn_img}_TS/${i}_${bn_img}_${bn_roi}.1D" \
+          >> "${outdir}/${bn_roidir}_${bn_dir}_${bn_img}".mat \
+        && echo "Appended to TS matrix"
+        (( i++ ))
       done
-      cat "${outdir}/${bn_dir}_${bn_img}"*.1D \
-        >> "${outdir}/${bn_dir}_${bn_img}".mat
+      printf "**Finished with %s**\n" "$bn_img"
     done
+    printf "**Finished with %s**\n" "$bn_dir"
   done
+  printf "**Finished with %s**\n" "$roidir"
 done
 }
 
