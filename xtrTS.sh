@@ -105,7 +105,8 @@ for roidir in "${roidirs[@]}"; do
     check_nii "$file"
     img="$file"
     bn_img="$(bname "$file")"
-    mkdir -p "${outdir}/${bn_roidir}_${bn_img}_TS"
+    tsdir=$(printf "%s/%s_%s_TS\n" "$outdir" "$bn_roidir" "$bn_img")
+    mkdir -p "$tsdir"
     # Loop through all ROIs in directory
     printf "**Starting with %s**\n" "$bn_img"
     # Set a counter
@@ -113,18 +114,20 @@ for roidir in "${roidirs[@]}"; do
     for roi in "${roidir}"/*; do
       check_nii "$roi"
       bn_roi="$(bname "$roi")"
+      outname=$(printf "%s/%03d_%s_%s.1D\n" \
+        "$tsdir" $i "$bn_img" "$bn_roi")
       fslmeants \
         -i "$img" \
-        -o "${outdir}/${bn_roidir}_${bn_img}_TS/${i}_${bn_img}_${bn_roi}.1D" \
+        -o "$outname" \
         -m "$roi" \
         --transpose \
       && echo "Extracted TS from ${bn_roi} of ${bn_img}"
-      # Concatenate all ROIs timeseries into same file.
-      cat "${outdir}/${bn_roidir}_${bn_img}_TS/${i}_${bn_img}_${bn_roi}.1D" \
-        >> "${outdir}/${bn_roidir}_${bn_img}".mat \
-      && echo "Appended to TS matrix"
       (( i++ ))
     done
+    # Concatenate all ROIs timeseries into same file.
+    cat "$tsdir"/* \
+      >> "${outdir}/${bn_roidir}_${bn_img}".mat \
+    && echo "Created TS matrix."
     printf "**Finished with %s**\n" "$bn_img"
   done
   ## Directories section
@@ -140,24 +143,28 @@ for roidir in "${roidirs[@]}"; do
       img="$content"
       bn_img="$(bname "$img")"
       printf "**Starting with %s**\n" "$bn_img"
-      mkdir -p "${outdir}/${bn_roidir}_${bn_dir}_${bn_img}_TS"
+      tsdir=$(printf "%s/%s_%s_%s_TS\n" \
+        "$outdir" "$bn_roidir" "$bn_dir" "$bn_img")
+      mkdir -p "$tsdir"
       #Same as above. This time, Directory basename is suffix in name.
       i=1
       for roi in "${roidir}"/*; do
         check_nii "$roi"
-        bn_roi="${roi##*/}"
+        bn_roi="$(bname "$roi")"
+        outname=$(printf \
+          "%s/%03d_%s_%s.1D" "$tsdir" "$i" "$bn_img" "$bn_roi")
         fslmeants \
           -i "$img" \
-          -o "${outdir}/${bn_roidir}_${bn_dir}_${bn_img}_TS/${i}_${bn_img}_${bn_roi}.1D" \
+          -o "$outname" \
           -m "$roi" \
           --transpose \
         && echo "Extracted TS from ${bn_roi} of ${bn_img} in ${bn_dir}"
-        # Concatenate all ROIs timeseries into same file.
-        cat "${outdir}/${bn_roidir}_${bn_dir}_${bn_img}_TS/${i}_${bn_img}_${bn_roi}.1D" \
-          >> "${outdir}/${bn_roidir}_${bn_dir}_${bn_img}".mat \
-        && echo "Appended to TS matrix"
         (( i++ ))
       done
+      # Concatenate all ROIs timeseries into same file.
+      cat "$tsdir"/* \
+        >> "${outdir}/${bn_roidir}_${bn_dir}_${bn_img}".mat \
+      && echo "Appended to TS matrix"
       printf "**Finished with %s**\n" "$bn_img"
     done
     printf "**Finished with %s**\n" "$bn_dir"
