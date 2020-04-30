@@ -15,16 +15,18 @@ help_msj(){
   printf "
 COMPULSORY ARGUMENTS
 -i\tPath to the Cluster Index Image.
-\t\tThe clusters must be assigned a unique number (from 1 to N).
+\t\tThe ROIs must be assigned a unique number (from 1 to N).
 \t\tThis can be the output of fsl's cluster.
--n\tNumber of clusters to extract.
-\tThe clusters will be extracted serially from 1 to N.
+-n\tNumber of ROIs to extract.
+\tThe ROIs will be extracted serially from 1 to N.
 OPTIONAL ARGUMENTS
 -o\tOut directory. Directory name unto which save the outputs.
 \t\tIt ought to be an existent directory.
 -m\tMin N. From what number to start extracting.
-\t\tThis argument can be used for extracting only a specific range of clusters:
-\t\t(from M to N).
+\t\tThis argument can be used for extracting only a specific range of ROIs:
+\t\tStarting from M, N clusters will be extracted.
+\t\t(from M to M+N).
+\t\tTo extract a single ROI with value !=1; N=1 and M=(value of ROI).
 -h\tDisplay this help and exit.\n"
   exit
 }
@@ -61,10 +63,10 @@ main(){
           || err "%s must be natural number (>0).\n" "$OPTARG"
         min="$OPTARG"
         ;;
-      o) outdir="$OPTARG";;
+      o) outdir="$OPTARG" ;;
       h) help_msj;;
-      :) err "Missing argument for -%s.\n" "$OPTARG";;
-      ?) err "Illegal option: %s.\n" "$OPTARG";;
+      :) err "Missing argument for -%s.\n" "$OPTARG" ;;
+      ?) err "Illegal option: %s.\n" "$OPTARG" ;;
     esac
   done
 
@@ -79,13 +81,14 @@ main(){
   mkdir "$outdir"
 
   # Loop through the number of clusters requested in NUM.
-  # Check for valid range
+  # Set min and max
+  : ${min:=1}
+  max=$(( min + num ))
 
-  # Implementati n of fslmaths extracting the indexed cluster.
+  # Implementation of fslmaths extracting the indexed cluster.
 
-  for ((i=1 ; i<1+"$num" ; i++)); do
-    out=$(printf "%s/%s_%03d"
-    "${outdir}/${bn}_$i"
+  for (( i=${min} ; i<${max} ; i++ )); do
+    out=$(printf "%s/%s_%0${#num}d\n" "$outdir" "$bn" "$i")
     fslmaths -dt int "$img" -thr "$i" -uthr "$i" -bin "$out"
   done
 }
