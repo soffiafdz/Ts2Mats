@@ -83,7 +83,7 @@ main(){
   bn=$(basename "$img" ".$ext")
   # Set outdir to default if not set and create it.
   : ${outdir:="${bn}_masks"}
-  mkdir "$outdir"
+  mkdir -p "$outdir"
 
   # Loop through the number of clusters requested in NUM.
   # Set min and max
