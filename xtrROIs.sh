@@ -7,7 +7,7 @@
 ######################################################################
 
 usage(){
-  printf "Usage: %s [-h] -i <Image> -n <NUMBER>\n" "$0"
+  printf "Usage: %s [-h] -i <Image> -n <NUMBER> [-m Min] [-o Outdir]\n" "$0"
 }
 
 help_msj(){
