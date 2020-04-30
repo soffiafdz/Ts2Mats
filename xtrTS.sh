@@ -13,14 +13,17 @@ usage(){
   printf "Usage:
 %s [-h] -i <IMG | IMG_DIR> [-i ...] -r <ROI_DIR> [-r ...] [-o OUTDIR]
 
-\t-i\tPath to Image to from where to extract the TS data.
-\t\t\tIt can be a file or a directory.
-\t-m\tPath to the directory containing the ROIs to use.
-\t\t\tThis must be a directory.
-\t-o\tOutput path for the outcomes.
-\t\t\tOptional. If used, it has to be an existent directory.
-\t\t\tWhen unset, outputs will be saved in the working directory.
-\t-h\tDisplay this help and exit.
+COMPULSORY ARGUMENTS
+-i\tPath to Image to from where to extract the TS data.
+\t\tIt can be a file or a directory.
+-m\tPath to the directory containing the ROIs to use.
+\t\tThis must be a directory.
+
+OPTIONAL ARGUMENTS
+-o\tOutput path for the outcomes.
+\t\tOptional. If used, it has to be an existent directory.
+\t\tWhen unset, outputs will be saved in the working directory.
+-h\tDisplay this help and exit.
 
 This script can parse several arguments of the same time;
 but every instance must be preceded by the flag.
@@ -33,10 +36,15 @@ Examples:
   exit
 }
 
+log(){
+  printf "[%s]: " "$(date +'%Y-%m-%dT%H:%M:%S%z')"
+  printf "$@"
+}
+
 err(){
-  echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]:" >&2
+  printf "[%s]: " "$(date +'%Y-%m-%dT%H:%M:%S%z')" >&2
   printf "$@" >&2
-  exit 1;
+  exit 1
 }
 
 check_nii(){
@@ -98,7 +106,7 @@ done
 ## Main loop through inputs and rois; extract timeseries and concatenate them.
 for roidir in "${roidirs[@]}"; do
   [ -d "$roidir" ] || err "%s not an existing directory" "$roidir"
-  printf "**Starting with %s**\n" "$roidir"
+  log "**Starting with %s**\n" "$roidir"
   bn_roidir="$(bname "$roidir")"
   ## Files section
   for file in "${infiles[@]}"; do
@@ -108,7 +116,7 @@ for roidir in "${roidirs[@]}"; do
     tsdir=$(printf "%s/%s_%s_TS\n" "$outdir" "$bn_roidir" "$bn_img")
     mkdir -p "$tsdir"
     # Loop through all ROIs in directory
-    printf "**Starting with %s**\n" "$bn_img"
+    log "**Starting with %s**\n" "$bn_img"
     # Set a counter
     i=1
     for roi in "${roidir}"/*; do
@@ -121,28 +129,28 @@ for roidir in "${roidirs[@]}"; do
         -o "$outname" \
         -m "$roi" \
         --transpose \
-      && echo "Extracted TS from ${bn_roi} of ${bn_img}"
+      && log "Extracted TS from %s of %s" "${bn_roi}" "${bn_img}"
       (( i++ ))
     done
     # Concatenate all ROIs timeseries into same file.
     cat "$tsdir"/* \
       >> "${outdir}/${bn_roidir}_${bn_img}".mat \
-    && echo "Created TS matrix."
-    printf "**Finished with %s**\n" "$bn_img"
+    && log "Created TS matrix."
+    log "**Finished with %s**\n" "$bn_img"
   done
   ## Directories section
   for dir in "${indirs[@]}"; do
     bn_dir="${dir##*/}"
-    printf "**Starting with %s**\n" "$bn_dir"
+    log "**Starting with %s**\n" "$bn_dir"
     # Loop through the contents to omit directories and check for NIfTIs.
     for content in "${dir}"/*; do
       [[ -d "$content" ]] \
-        && printf "%s in %s is a directory. Ommiting it.\n" "$content" "$dir" \
+        && log "%s in %s is a directory. Ommiting it.\n" "$content" "$dir" \
         && continue
       [[ -f "$content" ]] && check_nii "$content"
       img="$content"
       bn_img="$(bname "$img")"
-      printf "**Starting with %s**\n" "$bn_img"
+      log "**Starting with %s**\n" "$bn_img"
       tsdir=$(printf "%s/%s_%s_%s_TS\n" \
         "$outdir" "$bn_roidir" "$bn_dir" "$bn_img")
       mkdir -p "$tsdir"
@@ -158,18 +166,18 @@ for roidir in "${roidirs[@]}"; do
           -o "$outname" \
           -m "$roi" \
           --transpose \
-        && echo "Extracted TS from ${bn_roi} of ${bn_img} in ${bn_dir}"
+        && log "Extracted TS from %s of %s in %s" "${bn_roi}" "${bn_img}" "${bn_dir}"
         (( i++ ))
       done
       # Concatenate all ROIs timeseries into same file.
       cat "$tsdir"/* \
         >> "${outdir}/${bn_roidir}_${bn_dir}_${bn_img}".mat \
-      && echo "Appended to TS matrix"
-      printf "**Finished with %s**\n" "$bn_img"
+      && log "Appended to TS matrix"
+      log "**Finished with %s**\n" "$bn_img"
     done
-    printf "**Finished with %s**\n" "$bn_dir"
+    log "**Finished with %s**\n" "$bn_dir"
   done
-  printf "**Finished with %s**\n" "$roidir"
+  log "**Finished with %s**\n" "$roidir"
 done
 }
 
