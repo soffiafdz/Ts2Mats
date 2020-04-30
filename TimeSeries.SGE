@@ -1,0 +1,23 @@
+#! /bin/bash
+#$ -S /bin/bash
+#$ -N xTS
+#$ -V
+#$ -l mem_free=16G
+#$ -pe openmp 8
+#$ -j y
+#$ -wd /home/sfernandezl
+
+## modules
+. /etc/profile.d/modules.sh
+module load fsl/5.0.11
+
+main(){
+    home=/home/sfernandezl
+    bash "${home}/Ts2Mats/xtrTS.sh" \
+    -i "${home}/xcpFEB" \
+    -r "${home}/Ts2Mats/clusters-pos_masks" \
+    -r "${home}/Ts2Mats/clusters-neg_masks" \
+    -o "${home}/Ts2Mats/TimeSeries"
+}
+
+main "$@"
