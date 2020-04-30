@@ -129,13 +129,13 @@ for roidir in "${roidirs[@]}"; do
         -o "$outname" \
         -m "$roi" \
         --transpose \
-      && log "Extracted TS from %s of %s" "${bn_roi}" "${bn_img}"
+      && log "Extracted TS from %s of %s\n" "${bn_roi}" "${bn_img}"
       (( i++ ))
     done
     # Concatenate all ROIs timeseries into same file.
     cat "$tsdir"/* \
       >> "${outdir}/${bn_roidir}_${bn_img}".mat \
-    && log "Created TS matrix."
+    && log "Created TS matrix.\n"
     log "**Finished with %s**\n" "$bn_img"
   done
   ## Directories section
@@ -160,19 +160,19 @@ for roidir in "${roidirs[@]}"; do
         check_nii "$roi"
         bn_roi="$(bname "$roi")"
         outname=$(printf \
-          "%s/%03d_%s_%s.1D" "$tsdir" "$i" "$bn_img" "$bn_roi")
+          "%s/%03d_%s_%s.1D\n" "$tsdir" "$i" "$bn_img" "$bn_roi")
         fslmeants \
           -i "$img" \
           -o "$outname" \
           -m "$roi" \
           --transpose \
-        && log "Extracted TS from %s of %s in %s" "${bn_roi}" "${bn_img}" "${bn_dir}"
+        && log "Extracted TS from %s of %s in %s\n" "${bn_roi}" "${bn_img}" "${bn_dir}"
         (( i++ ))
       done
       # Concatenate all ROIs timeseries into same file.
       cat "$tsdir"/* \
         >> "${outdir}/${bn_roidir}_${bn_dir}_${bn_img}".mat \
-      && log "Appended to TS matrix"
+      && log "Appended to TS matrix\n"
       log "**Finished with %s**\n" "$bn_img"
     done
     log "**Finished with %s**\n" "$bn_dir"
