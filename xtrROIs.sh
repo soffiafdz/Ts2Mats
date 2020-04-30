@@ -31,9 +31,14 @@ OPTIONAL ARGUMENTS
   exit
 }
 
+log(){
+  printf "[%s]: " "$(date +'%Y-%m-%dT%H:%M:%S%z')"
+  printf "$@"
+}
+
 err(){
-  echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]:" >&2
-  printf "$*" >&2
+  printf "[%s]: " "$(date +'%Y-%m-%dT%H:%M:%S%z')" >&2
+  printf "$@" >&2
   exit 1
 }
 
@@ -46,7 +51,7 @@ main(){
     || err "fslmaths is not found in PATH. Check FSL installation.\n"
 
   ## Argument parser.
-  while getopts "hi:n:" arg; do
+  while getopts "hi:n:o:m:" arg; do
     case "$arg" in
       i)
         [ -f "$OPTARG" ] || err "%s is not a file.\n" "$OPTARG"
@@ -89,8 +94,10 @@ main(){
 
   for (( i=${min} ; i<${max} ; i++ )); do
     out=$(printf "%s/%s_%0${#num}d\n" "$outdir" "$bn" "$i")
+    log "Extracting %s\n" "$out"
     fslmaths -dt int "$img" -thr "$i" -uthr "$i" -bin "$out"
   done
+  log "Finished\n"
 }
 
 main "$@"
