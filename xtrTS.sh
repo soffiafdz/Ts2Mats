@@ -23,6 +23,9 @@ OPTIONAL ARGUMENTS
 -o\tOutput path for the outcomes.
 \t\tOptional. If used, it has to be an existent directory.
 \t\tWhen unset, outputs will be saved in the working directory.
+-m\tCreate matrices with the TimeSeries.
+\t\tIf marked this flag, all the ROI's Timeseries extracted will
+\t\tbe concatenated in a matrix for each subject.
 -h\tDisplay this help and exit.
 
 This script can parse several arguments of the same time;
@@ -69,19 +72,23 @@ which fslmeants &>/dev/null \
   || err "fslmeants is not executable. Check FSL installation.\n"
 
 ## Argument parser.
-while getopts "hi:r:o:" arg; do
+while getopts "hmi:r:o:" arg; do
   case "$arg" in
     i) [[ -e "$OPTARG" ]] || err "%s not found.\n" "$OPTARG"
-      inputs+=("$OPTARG");;
+      inputs+=("$OPTARG")
+      ;;
     r) [[ -d "$OPTARG" ]] || err "%s is not a directory.\n" "$OPTARG"
       [[ -e "$OPTARG" ]] || err "%s not found.\n" "$OPTARG"
-      roidirs+=("$OPTARG");;
+      roidirs+=("$OPTARG")
+      ;;
     o) [[ -d "$OPTARG" ]] || err "%s is not a directory.\n" "$OPTARG"
       [[ -e "$OPTARG" ]] || err "%s not found.\n" "$OPTARG"
-      outdir="$OPTARG";;
-    h) usage; exit;;
-    :) err "Missing argument for -%s.\n" "$OPTARG";;
-    ?) err "Illegal option: %s.\n" "$OPTARG";;
+      outdir="$OPTARG"
+      ;;
+    m) mats=1 ;;
+    h) usage; exit ;;
+    :) err "Missing argument for -%s.\n" "$OPTARG" ;;
+    ?) err "Illegal option: %s.\n" "$OPTARG" ;;
   esac
 done
 
@@ -105,79 +112,113 @@ done
 
 ## Main loop through inputs and rois; extract timeseries and concatenate them.
 for roidir in "${roidirs[@]}"; do
-  [ -d "$roidir" ] || err "%s not an existing directory" "$roidir"
-  log "**Starting with %s**\n" "$roidir"
-  bn_roidir="$(bname "$roidir")"
-  ## Files section
+  # ExiSting directory error check
+  [ -d "$roidir" ] || err "%s not an existing directory\n" "$roidir"
+
+  # If several roidirs save basename for naming.
+  [ ${#roidirs[@]} -gt 1 ] \
+    && bn_roidir="_$(bname "$roidir")" \
+    $$ log "Starting with %s\n" "$roidir"
+
+  # Save all files that are NIfTI into an array
+  for file in "${roidir}"/*; do
+    check_nii "$file"
+    rois+=("$file")
+  done
+  unset file
+
+  # If no valid ROI, exit with error.
+  [ ${#rois[@]} -eq 0 ] && err "No valid NIfTI in %s\n" "$roidir"
+
+  # Number of rois
+  numrois=${#rois[@]}
+
+  ## Files section ##
   for file in "${infiles[@]}"; do
+    # Check for NIfTI, save name and create timeseries directory.
     check_nii "$file"
     img="$file"
     bn_img="$(bname "$file")"
-    tsdir=$(printf "%s/%s_%s_TS\n" "$outdir" "$bn_roidir" "$bn_img")
+    tsdir=$(printf "%s/%s%s_TS\n" "$outdir" "$bn_img" "$bn_roidir")
     mkdir -p "$tsdir"
+
     # Loop through all ROIs in directory
-    log "**Starting with %s**\n" "$bn_img"
-    # Set a counter
-    i=1
-    for roi in "${roidir}"/*; do
-      check_nii "$roi"
+    log "Starting with %s\n" "$bn_img"
+
+    i=1 #Set counter
+    for roi in "${rois[@]}"; do
       bn_roi="$(bname "$roi")"
-      outname=$(printf "%s/%03d_%s_%s.1D\n" \
+      outname=$(printf "%s/%0${#numrois}d_%s_%s.1D\n" \
         "$tsdir" $i "$bn_img" "$bn_roi")
       fslmeants \
         -i "$img" \
         -o "$outname" \
         -m "$roi" \
         --transpose \
-      && log "Extracted TS from %s of %s\n" "${bn_roi}" "${bn_img}"
+        && log "Extracted TS from %s of %s\n" "${bn_roi}" "${bn_img}"
       (( i++ ))
     done
+
     # Concatenate all ROIs timeseries into same file.
-    cat "$tsdir"/* \
-      >> "${outdir}/${bn_roidir}_${bn_img}".mat \
-    && log "Created TS matrix.\n"
-    log "**Finished with %s**\n" "$bn_img"
+    [ $mat ] \
+      && cat "$tsdir"/* \
+        >> "${outdir}/${bn_roidir}_${bn_img}".mat \
+      && log "Created TS matrix.\n"
+
+    log "Finished with %s\n" "$bn_img"
   done
-  ## Directories section
+
+  ## Directories section ##
   for dir in "${indirs[@]}"; do
-    bn_dir="${dir##*/}"
-    log "**Starting with %s**\n" "$bn_dir"
+    # If several dirs save basename for naming.
+    [ ${#indirs[@]} -gt 1 ] \
+      && bn_dir="$(bname "$dir")_" \
+      && log "Starting with %s\n" "$bn_dir"
+
     # Loop through the contents to omit directories and check for NIfTIs.
     for content in "${dir}"/*; do
+      # Omit if directory
       [[ -d "$content" ]] \
         && log "%s in %s is a directory. Ommiting it.\n" "$content" "$dir" \
         && continue
+
+      # Check for NIfTI, save name and create timeseries directory.
       [[ -f "$content" ]] && check_nii "$content"
       img="$content"
       bn_img="$(bname "$img")"
-      log "**Starting with %s**\n" "$bn_img"
-      tsdir=$(printf "%s/%s_%s_%s_TS\n" \
-        "$outdir" "$bn_roidir" "$bn_dir" "$bn_img")
+      log "Starting with %s\n" "$bn_img"
+      tsdir=$(printf "%s/%s%s%s_TS\n" \
+        "$outdir" "$bn_dir" "$bn_img" "$bn_roidir")
       mkdir -p "$tsdir"
+
       #Same as above. This time, Directory basename is suffix in name.
       i=1
       for roi in "${roidir}"/*; do
         check_nii "$roi"
         bn_roi="$(bname "$roi")"
         outname=$(printf \
-          "%s/%03d_%s_%s.1D\n" "$tsdir" "$i" "$bn_img" "$bn_roi")
+          "%s/%0${#numrois}d_%s_%s.1D\n" "$tsdir" "$i" "$bn_img" "$bn_roi")
         fslmeants \
           -i "$img" \
           -o "$outname" \
           -m "$roi" \
           --transpose \
-        && log "Extracted TS from %s of %s in %s\n" "${bn_roi}" "${bn_img}" "${bn_dir}"
+        && log "Extracted TS from %s of %s in %s\n" \
+          "${bn_roi}" "${bn_img}" "${bn_dir}"
         (( i++ ))
       done
+
       # Concatenate all ROIs timeseries into same file.
-      cat "$tsdir"/* \
-        >> "${outdir}/${bn_roidir}_${bn_dir}_${bn_img}".mat \
-      && log "Appended to TS matrix\n"
-      log "**Finished with %s**\n" "$bn_img"
+      [ $mat ] \
+        && cat "$tsdir"/* \
+          >> "${outdir}/${bn_dir}${bn_img}${bn_roidir}".mat \
+        && log "Created TS matrix for %s.\n" "${bn_img}"
+
+      log "Finished with %s\n" "$bn_img"
     done
-    log "**Finished with %s**\n" "$bn_dir"
+    [ ${#indirs[@]} -gt 1 ] && log "Finished with %s\n" "$bn_dir"
   done
-  log "**Finished with %s**\n" "$roidir"
+  [ ${#roidirs[@]} -gt 1 ] && log "Finished with %s\n" "$roidir"
 done
 }
 
