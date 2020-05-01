@@ -160,7 +160,7 @@ for roidir in "${roidirs[@]}"; do
     done
 
     # Concatenate all ROIs timeseries into same file.
-    [ $mat ] \
+    [ $mats ] \
       && cat "$tsdir"/* \
         >> "${outdir}/${bn_roidir}_${bn_img}".mat \
       && log "Created TS matrix.\n"
@@ -203,13 +203,13 @@ for roidir in "${roidirs[@]}"; do
           -o "$outname" \
           -m "$roi" \
           --transpose \
-        && log "Extracted TS from %s of %s in %s\n" \
-          "${bn_roi}" "${bn_img}" "${bn_dir}"
+        && log "Extracted TS from %s of %s\n" \
+          "${bn_roi}" "${bn_img}"
         (( i++ ))
       done
 
       # Concatenate all ROIs timeseries into same file.
-      [ $mat ] \
+      [ $mats ] \
         && cat "$tsdir"/* \
           >> "${outdir}/${bn_dir}${bn_img}${bn_roidir}".mat \
         && log "Created TS matrix for %s.\n" "${bn_img}"
