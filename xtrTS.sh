@@ -34,7 +34,7 @@ The output will be directory for every image containing
 
 Examples:
 \t%s -i sub1-ses1.nii -i sub1-ses2.nii -i sub1-ses3.nii -r atlas/rois
-\t%s -i proj/subs1 -i proj/subs2 -r atlas/power -r atlas/dosenbach\n" \
+\t%s -i proj/subs1 -i proj/subs2 -r atlas/power -r atlas/dosenbach.\n" \
     "$0" "$0";
   exit
 }
@@ -53,7 +53,7 @@ err(){
 check_nii(){
  local ext="${1#*.}"
   [[ "$ext" != "nii" ]] && [[ "$ext" != "nii.gz" ]] \
-    && printf "%s is not a NIfTI image\n" "$1" \
+    && printf "%s is not a NIfTI image.\n" "$1" \
     && continue
 }
 
@@ -113,12 +113,12 @@ done
 ## Main loop through inputs and rois; extract timeseries and concatenate them.
 for roidir in "${roidirs[@]}"; do
   # ExiSting directory error check
-  [ -d "$roidir" ] || err "%s not an existing directory\n" "$roidir"
+  [ -d "$roidir" ] || err "%s not an existing directory.\n" "$roidir"
 
   # If several roidirs save basename for naming.
   [ ${#roidirs[@]} -gt 1 ] \
     && bn_roidir="_$(bname "$roidir")" \
-    $$ log "Starting with %s\n" "$roidir"
+    $$ log "Starting with %s.\n" "$roidir"
 
   # Save all files that are NIfTI into an array
   for file in "${roidir}"/*; do
@@ -128,7 +128,7 @@ for roidir in "${roidirs[@]}"; do
   unset file
 
   # If no valid ROI, exit with error.
-  [ ${#rois[@]} -eq 0 ] && err "No valid NIfTI in %s\n" "$roidir"
+  [ ${#rois[@]} -eq 0 ] && err "No valid NIfTI in %s.\n" "$roidir"
 
   # Number of rois
   numrois=${#rois[@]}
@@ -143,7 +143,7 @@ for roidir in "${roidirs[@]}"; do
     mkdir -p "$tsdir"
 
     # Loop through all ROIs in directory
-    log "Starting with %s\n" "$bn_img"
+    log "Starting with %s.\n" "$bn_img"
 
     i=1 #Set counter
     for roi in "${rois[@]}"; do
@@ -155,7 +155,7 @@ for roidir in "${roidirs[@]}"; do
         -o "$outname" \
         -m "$roi" \
         --transpose \
-        && log "Extracted TS from %s of %s\n" "${bn_roi}" "${bn_img}"
+        && log "Extracted TS from %s of %s.\n" "${bn_roi}" "${bn_img}"
       (( i++ ))
     done
 
@@ -165,7 +165,7 @@ for roidir in "${roidirs[@]}"; do
         >> "${outdir}/${bn_roidir}_${bn_img}".mat \
       && log "Created TS matrix.\n"
 
-    log "Finished with %s\n" "$bn_img"
+    log "Finished with %s.\n" "$bn_img"
   done
 
   ## Directories section ##
@@ -173,7 +173,7 @@ for roidir in "${roidirs[@]}"; do
     # If several dirs save basename for naming.
     [ ${#indirs[@]} -gt 1 ] \
       && bn_dir="$(bname "$dir")_" \
-      && log "Starting with %s\n" "$bn_dir"
+      && log "Starting with %s.\n" "$bn_dir"
 
     # Loop through the contents to omit directories and check for NIfTIs.
     for content in "${dir}"/*; do
@@ -186,7 +186,7 @@ for roidir in "${roidirs[@]}"; do
       [[ -f "$content" ]] && check_nii "$content"
       img="$content"
       bn_img="$(bname "$img")"
-      log "Starting with %s\n" "$bn_img"
+      log "Starting with %s.\n" "$bn_img"
       tsdir=$(printf "%s/%s%s%s_TS\n" \
         "$outdir" "$bn_dir" "$bn_img" "$bn_roidir")
       mkdir -p "$tsdir"
@@ -203,7 +203,7 @@ for roidir in "${roidirs[@]}"; do
           -o "$outname" \
           -m "$roi" \
           --transpose \
-        && log "Extracted TS from %s of %s\n" \
+        && log "Extracted TS from %s of %s.\n" \
           "${bn_roi}" "${bn_img}"
         (( i++ ))
       done
@@ -214,11 +214,11 @@ for roidir in "${roidirs[@]}"; do
           >> "${outdir}/${bn_dir}${bn_img}${bn_roidir}".mat \
         && log "Created TS matrix for %s.\n" "${bn_img}"
 
-      log "Finished with %s\n" "$bn_img"
+      log "Finished with %s.\n" "$bn_img"
     done
-    [ ${#indirs[@]} -gt 1 ] && log "Finished with %s\n" "$bn_dir"
+    [ ${#indirs[@]} -gt 1 ] && log "Finished with %s.\n" "$bn_dir"
   done
-  [ ${#roidirs[@]} -gt 1 ] && log "Finished with %s\n" "$roidir"
+  [ ${#roidirs[@]} -gt 1 ] && log "Finished with %s.\n" "$roidir"
 done
 }
 

@@ -76,7 +76,7 @@ main(){
   done
 
   # Check for compulsory variables.
-  [ -z "$img" ] || [ -z "$num" ] && err "Missing compulsory argument(s)\n"
+  [ -z "$img" ] || [ -z "$num" ] && err "Missing compulsory argument(s).\n"
 
   # Derivated variables.
   ext=${img#*.}
@@ -94,10 +94,10 @@ main(){
 
   for (( i=${min} ; i<${max} ; i++ )); do
     out=$(printf "%s/%s_%0${#num}d\n" "$outdir" "$bn" "$i")
-    log "Extracting %s\n" "$out"
+    log "Extracting %s.\n" "$out"
     fslmaths -dt int "$img" -thr "$i" -uthr "$i" -bin "$out"
   done
-  log "Finished\n"
+  log "Finished.\n"
 }
 
 main "$@"
